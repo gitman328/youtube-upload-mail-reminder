@@ -141,7 +141,7 @@
 	<div class="header"></div>
 	'.$game_list.'
 	<div class="spacer_30"></div>
-	<center class="spacer"><a href="https://www.github.com/gitman328/youtube-mail-reminder" target="_blank">Youtube Mail Reminder</a></center>
+	<center class="spacer"><a href="https://www.github.com/gitman328/youtube-upload-mail-reminder" target="_blank">Youtube Mail Reminder</a></center>
 	<div class="spacer"></div>
 	</div>
 	<div class="footer" align="center"> </div>
