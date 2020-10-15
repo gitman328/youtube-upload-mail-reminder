@@ -2,16 +2,23 @@
 //
 	include("config.php");
 	
-	$sql = "SELECT * FROM `#channel_list` ";
+	$sql_0 = "SELECT * FROM `#accounts` ";
 	
-	if ($result = mysqli_query($dbmysqli,$sql))
+	if ($result_0 = mysqli_query($dbmysqli,$sql_0))
 	{
-	while ($obj = mysqli_fetch_object($result)){
+	while ($obj_0 = mysqli_fetch_object($result_0)){
+	{
+	
+	$sql_1 = "SELECT * FROM `#channel_list` WHERE `account` LIKE '".$obj_0->mailadress."' AND `active` LIKE 'yes' ";
+	
+	if ($result_1 = mysqli_query($dbmysqli,$sql_1))
+	{
+	while ($obj_1 = mysqli_fetch_object($result_1)){
 	{
 	
 	// create table if not exist
 	mysqli_query($dbmysqli, "
-	CREATE TABLE IF NOT EXISTS `".$obj->channel_id."` (
+	CREATE TABLE IF NOT EXISTS `".$obj_1->channel_id."#".$obj_0->id."` (
 	`id` int(11) NOT NULL AUTO_INCREMENT,
 	`channel_name` varchar(255) NOT NULL,
 	`video_title` varchar(255) NOT NULL,
@@ -21,11 +28,12 @@
 	`date` varchar(255) NOT NULL,
 	`notified` int(1) NOT NULL, 
 	`notified_ts` int(12) NOT NULL, 
+	`account` varchar(255) NOT NULL,
 	PRIMARY KEY (`id`)
 	) ENGINE=MyISAM  DEFAULT CHARSET=utf8;
 	");
 	
-	$xmlfile = 'https://www.youtube.com/feeds/videos.xml?channel_id='.$obj->channel_id;
+	$xmlfile = 'https://www.youtube.com/feeds/videos.xml?channel_id='.$obj_1->channel_id;
 	
 	$feed = simplexml_load_file(rawurlencode($xmlfile));
 		
@@ -56,28 +64,30 @@ if($feed)
 //	echo date("d.m.Y, H:i", $timestamp).'<br>';
 //	echo '<hr>';
 	
-	// check if video alreday exist
-	$sql_1 = mysqli_query($dbmysqli, "SELECT COUNT(id) FROM `".$obj->channel_id."` WHERE `video_id` LIKE '".$video_id."' ");
-	$result_1 = mysqli_fetch_row($sql_1);
-	$summary = $result_1[0];
+	// check if video already exist
+	$sql_2 = mysqli_query($dbmysqli, "SELECT COUNT(id) FROM `".$obj_1->channel_id."#".$obj_0->id."` WHERE `video_id` LIKE '".$video_id."' ");
+	$result_2 = mysqli_fetch_row($sql_2);
+	$summary = $result_2[0];
 	
 	if($summary == 0 and $video_id != '')
 	{
-	mysqli_query($dbmysqli, "INSERT INTO `".$obj->channel_id."` 
+	mysqli_query($dbmysqli, "INSERT INTO `".$obj_1->channel_id."#".$obj_0->id."` 
 	(
 	channel_name, 
 	video_title, 
 	video_id, 
 	video_thumbnail, 
 	timestamp, 
-	date  
+	date, 
+	account   
 	) VALUES (
 	'".$channel_name."', 
 	'".$video_title."', 
 	'".$video_id."', 
 	'".$video_thumbnail."', 
 	'".$timestamp."', 
-	'".date("d.m.Y, H:i:s", $timestamp)."' 
+	'".date("d.m.Y, H:i:s", $timestamp)."', 
+	'".$obj_0->mailadress."'
 	) 
 	");
 	} // 
@@ -88,6 +98,10 @@ if($feed)
 	
 	sleep(5);
 
+	}
+	}
+	}
+	
 	}
 	}
 	}

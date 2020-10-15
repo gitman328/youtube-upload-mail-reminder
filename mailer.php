@@ -2,16 +2,27 @@
 //
 	include("config.php");
 	
-	$loop = 0;
 	$delete_time = time() - 604800;
 	
-	$sql_0 = "SELECT * FROM `#channel_list` ";
+	$loop = 0;
+
+	$sql = "SELECT * FROM `#accounts` WHERE `active` LIKE 'yes' ";
+	
+	if ($result = mysqli_query($dbmysqli,$sql))
+	{
+	while ($obj = mysqli_fetch_object($result)){
+	{
+	
+	$id = $obj->id;
+	$mailadress = $obj->mailadress;
+	
+	$sql_0 = "SELECT * FROM `#channel_list` WHERE `account` LIKE '".$mailadress."' AND `active` LIKE 'yes' ";
 	if ($result_0 = mysqli_query($dbmysqli,$sql_0))
 	{
 	while ($obj_0 = mysqli_fetch_object($result_0)){
 	{
 	
-	$sql_1 = "SELECT * FROM `".$obj_0->channel_id."` WHERE `notified` LIKE '0' ";
+	$sql_1 = "SELECT * FROM `".$obj_0->channel_id."#".$id."` WHERE `notified` LIKE '0' ";
 	if ($result_1 = mysqli_query($dbmysqli,$sql_1))
 	{
 	while ($obj_1 = mysqli_fetch_object($result_1)){
@@ -28,13 +39,16 @@
 	
 	$loop = $loop + 1;
 	
-	$game_list = $game_list.'
+	if(!isset($content) or $content == ""){ $content = ""; }
+	
+	$content = $content.'
+	<div class="frame">
 	<div align="center">
 		<table border="0">
 		  <tr>
 			<td class="channel-name" align="center">
 			<h2><a href="https://www.youtube.com/channel/'.$obj_0->channel_id.'" target="_blank">
-			<strong>'.$channel_name.' ('.date("d.m, H:i", $obj_1->timestamp).')</strong></a></h2>
+			<strong>'.$channel_name.' ('.date($date_format, $obj_1->timestamp).')</strong></a></h2>
 			<h3 class="video-title"><strong>'.$obj_1->video_title.'</strong></h3></td>
 		  </tr>
 		  <tr>
@@ -49,25 +63,29 @@
 			<td class="spacer">&nbsp;</td>
 		  </tr>
 		</table>
-		<hr style="border: 1px dotted #FFF; width:75%;">
+	  </div>
 	  </div>';
 	  
 	}
 	
-	mysqli_query($dbmysqli, "UPDATE `".$obj_0->channel_id."` SET `notified` = '1', `notified_ts` = '".time()."' WHERE `id` = '".$obj_1->id."' ");
+	mysqli_query($dbmysqli, "UPDATE `".$obj_0->channel_id."#".$id."` SET `notified` = '1', `notified_ts` = '".time()."' WHERE `id` = '".$obj_1->id."' ");
 	
 	}
 	}
 	}
 	
-	mysqli_query($dbmysqli, "DELETE FROM `".$obj_0->channel_id."` WHERE `notified` = '1' AND `timestamp` < ".$delete_time." ");
-	mysqli_query($dbmysqli, "OPTIMIZE TABLE `".$obj_0->channel_id."` ");
+	mysqli_query($dbmysqli, "DELETE FROM `".$obj_0->channel_id."#".$id."` WHERE `notified` = '1' AND `timestamp` < ".$delete_time." ");
+	mysqli_query($dbmysqli, "OPTIMIZE TABLE `".$obj_0->channel_id."#".$id."`");
+	mysqli_query($dbmysqli, "OPTIMIZE TABLE `#accounts`");
+	mysqli_query($dbmysqli, "OPTIMIZE TABLE `#channel_list`");
 
 	}
 	}
 	} // channel list
 	
 	if($loop == 1){ $subject = $channel_name.' has uploaded a video'; } else { $subject = 'A favorite channel has uploaded a video';  }
+	
+	if(!isset($content) or $content == ""){ $content = ""; }
 	
 	$htmlContent = ' 
 	<html> 
@@ -76,12 +94,12 @@
 	<style>
 	body {
 		background-color: #000;
+		font-family: Verdana, Arial, Helvetica, sans-serif;
 	}
 	.wrapper {
 		color:#000; 
-		background-color: #000; 
-		border: 2px dotted #FFF;
-		padding: 20px;
+		background-color: #000;
+		padding: 10px;
 	}
 	.header {
 		font-size: 35px;
@@ -108,6 +126,11 @@
 		padding-top: 10px; 
 		padding-bottom: 10px;
 	}
+	.frame {
+		border: thin solid #FFFFFF;
+		padding-top: 10px;
+		margin-bottom: 40px;
+	}
 	.content-tab {
 		color: #E0E0E0; 
 		padding-top: 10px; 
@@ -123,28 +146,18 @@
 		padding-bottom: 10px;
 	}
 	.spacer a:link {
+		font-size: 12px;
 		color: #FFF;
-	}
-	.spacer_30 {
-		clear: both;
-		width: 100%;
-		height: 30px;
-	}
-	.footer {
-		color: #FFF; 
-		background-color: #000;
+		text-decoration: none;
 	}
 	</style>
 	</head>
 	<body>
 	<div class="wrapper">
 	<div class="header"></div>
-	'.$game_list.'
-	<div class="spacer_30"></div>
-	<center class="spacer"><a href="https://www.github.com/gitman328/youtube-upload-mail-reminder" target="_blank">Youtube Mail Reminder</a></center>
-	<div class="spacer"></div>
+	'.$content.'
+	<center class="spacer"><a href="https://www.github.com/gitman328/youtube-upload-mail-reminder" target="_blank">Youtube Upload Mail Reminder</a></center>
 	</div>
-	<div class="footer" align="center"> </div>
 	</body> 
 	</html>'; 
  
@@ -153,9 +166,16 @@
 	$headers .= "Content-type:text/html;charset=UTF-8"."\r\n"; 
 	$headers .= 'From: '.$from_name.'<'.$from.'>'."\r\n"; 
 	
-	if($game_list != '')
+	if($content != '')
 	{
-	if(mail($to, $subject, $htmlContent, $headers)){ echo 'Email has sent successfully.'; } else { echo 'Email sending failed.'; }
+	if(mail($mailadress, $subject, $htmlContent, $headers)){ echo 'Email to '.$mailadress.' sent.<br>'; } else { echo 'Email sending to '.$mailadress.' failed.<br>'; }
 	}
+	
+	$loop = 0;
+	$content = '';
+	
+	}
+	}
+	} // accounts
 
 ?>

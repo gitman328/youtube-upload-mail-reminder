@@ -16,8 +16,16 @@
 	}
 	
 	// mail settings
-	$to = 'yourmail@web.com'; 
-	$from = 'yt-reminder@web.com';
+	$from = 'yt-reminder@domain.com';
 	$from_name = 'Youtube Upload Reminder';
+	
+	// date format
+	$format_1 = 'd.m, H:i';
+	$format_2 = 'm/d, H:i';  
+	
+	# For format month/day change to $date_format = $format_1;
+	# For format day.month change to $date_format = $formar_2;
+	
+	$date_format = $format_1;
 
 ?>
