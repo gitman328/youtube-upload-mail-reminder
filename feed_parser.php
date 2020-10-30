@@ -41,6 +41,9 @@ if($feed)
 	{
 	for ($i = 0; $i <= 9; $i++){
 	
+	if($feed->entry[$i]->id != '')
+	{
+	
 	$channel_name = $feed->author->name;
 	$channel_name = str_replace("'", "`", $channel_name);
 	$channel_name = str_replace("\"", "`", $channel_name);
@@ -78,7 +81,9 @@ if($feed)
 	video_id, 
 	video_thumbnail, 
 	timestamp, 
-	date, 
+	date,
+	notified, 
+	notified_ts, 
 	account   
 	) VALUES (
 	'".$channel_name."', 
@@ -87,11 +92,15 @@ if($feed)
 	'".$video_thumbnail."', 
 	'".$timestamp."', 
 	'".date("d.m.Y, H:i:s", $timestamp)."', 
+	'0', 
+	'0', 
 	'".$obj_0->mailadress."'
 	) 
 	");
-	} // 
-		
+	} 
+	
+	} // feed empty
+			
 	} // for i
 	
 	} // feed

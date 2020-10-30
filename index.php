@@ -2,12 +2,13 @@
 
 	include("config.php");
 	
-	if(!isset($_REQUEST['action']) or $_REQUEST['action'] == ""){ $_REQUEST['action'] = ""; }
-	if(!isset($_REQUEST['channel_id']) or $_REQUEST['channel_id'] == ""){ $_REQUEST['channel_id'] = ""; }
-	if(!isset($_REQUEST['channel_name']) or $_REQUEST['channel_name'] == ""){ $_REQUEST['channel_name'] = ""; }
-	if(!isset($_REQUEST['mailadress']) or $_REQUEST['mailadress'] == ""){ $_REQUEST['mailadress'] = ""; }
-	if(!isset($_REQUEST['account']) or $_REQUEST['account'] == ""){ $_REQUEST['account'] = ""; }
-	if(!isset($_REQUEST['active']) or $_REQUEST['active'] == ""){ $_REQUEST['active'] = ""; }
+	if(!isset($_REQUEST['action']) or $_REQUEST['action'] == ''){ $_REQUEST['action'] = ''; }
+	if(!isset($_REQUEST['channel_id']) or $_REQUEST['channel_id'] == ''){ $_REQUEST['channel_id'] = ''; }
+	if(!isset($_REQUEST['channel_name']) or $_REQUEST['channel_name'] == ''){ $_REQUEST['channel_name'] = ''; }
+	if(!isset($_REQUEST['mailadress']) or $_REQUEST['mailadress'] == ''){ $_REQUEST['mailadress'] = ''; }
+	if(!isset($_REQUEST['account']) or $_REQUEST['account'] == ''){ $_REQUEST['account'] = ''; }
+	if(!isset($_REQUEST['active']) or $_REQUEST['active'] == ''){ $_REQUEST['active'] = ''; }
+	if(!isset($_REQUEST['content']) or $_REQUEST['content'] == ''){ $_REQUEST['content'] = ''; }
 	
 	$action = $_REQUEST['action'];
 	$channel_id = $_REQUEST['channel_id'];
@@ -15,7 +16,8 @@
 	$mailadress = $_REQUEST['mailadress'];
 	$account = $_REQUEST['account'];
 	$active = $_REQUEST['active'];
-
+	$content = $_REQUEST['content'];
+	
 
 if($action == 'show_accounts')
 	{
@@ -87,11 +89,15 @@ if($action == 'show_subscription_list')
 	}
 	}
 	
+	$import_field = '
+	
+	';
+	
 	$subscription_list_header = '
 	<div class="spacer_5"></div>
 	<div class="row">
 	<div class="col-sm-12 col-lg-12 col-md-12">
-	Add a channel
+	Add a channel | <a style="cursor:pointer;" onclick="bulk_import(\'modal\',\''.$account.'\')">Bulk import</a>
 	<div class="spacer_5"></div>
 	<div class="row">
 	<div class="col-sm-5 col-lg-5 col-md-5"><input type="text" id="channel_name" placeholder="Channel Name" class="form-control"></div>
@@ -164,15 +170,6 @@ if($action == 'add_account')
 if($action == 'save_account')
 	{
 	sleep(1);
-	function check($mailadress){
-	if(eregi("^[a-z0-9]+([-_\.]?[a-z0-9])+@[a-z0-9]+([-_\.]?[a-z0-9])+\.[a-z]{2,4}", $mailadress)){ return TRUE; } else { return FALSE; }
-	}
-	
-	if(check($mailadress) == FALSE)
-	{
-	echo 'Mailadress format is wrong!';
-	exit; 
-	}
 	
 	$sql = mysqli_query($dbmysqli, "SELECT COUNT(id) FROM `#accounts` WHERE `mailadress` LIKE '".$mailadress."' ");
 	$result = mysqli_fetch_row($sql);
@@ -295,115 +292,165 @@ if($action == 'channel_list')
 	exit;
 }
 
+
+if($action == 'bulk_import')
+	{
+	
+	sleep(1);
+	
+	$loop = 0;
+	
+	$entries = preg_match_all("#<outline(.*?)/>#si", $content, $null);
+	
+	if($entries != 0)
+	{
+	
+	for ($i = 1; $i <= $entries; $i++)
+	{
+	
+	// channel name
+	preg_match_all("#text=\"(.*?)\"#si", $content, $channel_name);
+	$channel_name = str_replace("text=\"", "", $channel_name[0][$i]);
+	$channel_name = str_replace("\"", "", $channel_name);
+	
+	// channel id
+	preg_match_all("#channel_id=(.*?)\"#si", $content, $channel_id);
+	$channel_id = str_replace("channel_id=", "", $channel_id[0][$i-1]);
+	$channel_id = str_replace("\"", "", $channel_id);
+	
+	// check if channel already exist
+	$sql = mysqli_query($dbmysqli, "SELECT COUNT(id) FROM `#channel_list` WHERE `channel_id` LIKE '".$channel_id."' AND `account` LIKE '".$account."' ");
+	$result = mysqli_fetch_row($sql);
+	$summary = $result[0];
+	
+	if($summary == 0)
+	{
+	$loop = $loop +1;
+	mysqli_query($dbmysqli, "INSERT INTO `#channel_list` (channel_id, channel_name, account, active) VALUES ('".$channel_id."', '".$channel_name."', '".$account."', 'yes') ");
+	}
+			
+	} // for i
+	
+	} else { echo '<strong>An error occured. Check the inserted content!</strong>'; exit; } // entries
+	
+	echo $loop.' Channels added!';
+	
+	exit;
+}
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="">
-    <meta name="author" content="">
-
-    <title>Youtube Upload Mail Reminder</title>
-
-    <!-- Bootstrap Core CSS -->
-    <link href="css/bootstrap.css" rel="stylesheet">
-
-    <!-- Custom CSS -->
-    <link href="css/style.css" rel="stylesheet">
-
-    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
-    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
-    <!--[if lt IE 9]>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="">
+<meta name="author" content="">
+<title>Youtube Upload Mail Reminder</title>
+<!-- Bootstrap Core CSS -->
+<link href="css/bootstrap.css" rel="stylesheet">
+<!-- Custom CSS -->
+<link href="css/style.css" rel="stylesheet">
+<!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+<!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+<!--[if lt IE 9]>
         <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
         <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
     <![endif]-->
-    
 </head>
-
 <body id="top">
-
-    <!-- Navigation -->
-    <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
-        <div class="container">
-            <!-- Brand and toggle get grouped for better mobile display -->
-            <div class="navbar-header">
-                <!--<button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+<!-- Navigation -->
+<nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+  <div class="container">
+    <!-- Brand and toggle get grouped for better mobile display -->
+    <div class="navbar-header">
+      <!--<button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
                     <span class="sr-only">Toggle navigation</span>
                     <span class="icon-bar"></span>
                     <span class="icon-bar"></span>
                     <span class="icon-bar"></span>
                 </button>-->
-                <a class="navbar-brand" href="./">Youtube Upload Mail Reminder</a>
-            </div>
-            <!-- Collect the nav links, forms, and other content for toggling -->
-            <!--<div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+      <a class="navbar-brand" href="./">Youtube Upload Mail Reminder</a> </div>
+    <!-- Collect the nav links, forms, and other content for toggling -->
+    <!--<div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
                 <ul class="nav navbar-nav">
                     <li>
                         <a href="#">Link</a>
                     </li>
                 </ul>
             </div>-->
-            <!-- /.navbar-collapse -->
-        </div>
-        <!-- /.container -->
-    </nav>
-
-    <!-- Page Content -->
-    <div class="container">
-
-        <div class="row">
-
-            <div class="col-md-3">
-                <p class="lead">Account</p>
-                <div id="account_list" class="list-group">
-                
-                </div>
-            </div>
-
-            <div class="col-md-9">
-
-                <div class="row carousel-holder"></div>
-                
-                <div class="row">
-                <div class="col-sm-12 col-lg-12 col-md-12" id="content">&nbsp;</div>
-                </div>
-                    
-            </div>
-            
-        </div>
-
+    <!-- /.navbar-collapse -->
+  </div>
+  <!-- /.container -->
+</nav>
+<!-- Page Content -->
+<div class="container">
+  <div class="row">
+    <div class="col-md-3">
+      <p class="lead">Account</p>
+      <div id="account_list" class="list-group"> </div>
     </div>
-    <!-- /.container -->
-
-    <div class="container">
-
-        <hr>
-
-        <!-- Footer -->
-        <footer>
-            <div class="row">
-                <div class="col-lg-12">
-                    <p align="center"><a href="https://github.com/gitman328/youtube-upload-mail-reminder" target="_blank">Youtube Upload Mail Reminder</a></p>
-                </div>
-            </div>
-        </footer>
-
+    <div class="col-md-9">
+      <div class="row carousel-holder"></div>
+      <div class="row">
+        <div class="col-sm-12 col-lg-12 col-md-12" id="content">&nbsp;</div>
+      </div>
     </div>
-    <!-- /.container -->
-
-    <!-- jQuery -->
-    <script src="js/jquery.js"></script>
-
-    <!-- Bootstrap Core JavaScript -->
-    <script src="js/bootstrap.min.js"></script>
-    
-    <!-- Custom Scropt -->
-    <script src="js/script.js"></script>
-    
+  </div>
+</div>
+<!-- /.container -->
+<div class="container">
+  <hr>
+  <!-- Footer -->
+  <footer>
+    <div class="row">
+      <div class="col-lg-12">
+        <p align="center"><a href="https://github.com/gitman328/youtube-upload-mail-reminder" target="_blank">Youtube Upload Mail Reminder</a></p>
+      </div>
+    </div>
+  </footer>
+  <!--modal-->
+  <div class="modal fade" id="Modal1" tabindex="-1" role="dialog" aria-labelledby="Modal1Label">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group"> </div>
+          <div class="form-group"> To import your whole subscription list from Youtube, make these steps.
+            <ul>
+              <div class="spacer_10"></div>
+              <li>Login into your Youtube Account</li>
+              <li><a href="https://www.youtube.com/subscription_manager?action_takeout=1" target="_blank">Download the XML file from your subscription list</a></li>
+              <li>Open the XML file with a Text Editor, and copy the content</li>
+              <li>Paste the complete content from the XML file in text area down below</li>
+              <li>Click the button to import</li>
+            </ul>
+            <div class="spacer_5"></div>
+            <textarea id="xml_content" cols="3" rows="5" style="width:100%;"></textarea>
+            <div class="spacer_20"></div>
+            <center id="import_status">
+              &nbsp;
+            </center>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default btn-block" onclick="bulk_import('import')">Import</button>
+        </div>
+        <input id="account_name" type="text" hidden>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- /.container -->
+<!-- jQuery -->
+<script src="js/jquery.js"></script>
+<!-- Bootstrap Core JavaScript -->
+<script src="js/bootstrap.min.js"></script>
+<!-- Custom Scropt -->
+<script src="js/script.js"></script>
 <script>
 
 $(function() {
@@ -431,9 +478,6 @@ $(document).ready(function(){
 });
 
 </script>
-
 <a class="scroll-top"> <i class="glyphicon glyphicon-arrow-up"></i> </a>
-
 </body>
-
 </html>
