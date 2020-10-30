@@ -32,6 +32,8 @@ This mix of signs and numbers is the channel ID, which is required to paste in t
 
 ![Screenshot](screenshot.png)
 
+- It's also possible to import the whole subscription list. How this works, is described in the interface.
+
 ---
 
 Take note: After adding a new channel and run the script (feed_parser.php), a mail with many content will send.
