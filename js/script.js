@@ -151,3 +151,32 @@ function subscription_list(action,channel_id,account){
 	$("#edit_status").html("");
 	});
 }
+
+function bulk_import(action,account){
+	
+	if(action == 'modal'){ $('#Modal1').modal('show'); $("#account_name").val(account); }
+	
+	if(action == 'import')
+	{
+	var account = $("#account_name").val();
+	var content = $("#xml_content").val();
+	if(content == ''){ return; }
+	
+	$("#import_status").html("<img src=\"loading.gif\" width=\"16\" height=\"16\" align=\"absmiddle\">");
+	
+	$.post("index.php",
+	{
+	action: 'bulk_import',
+	account: account,
+	content: content
+	},
+	function(data){
+	$("#import_status").html(data);
+	
+	if(data.match(/channels/i))
+	{
+	setTimeout(function() { $('#Modal1').modal('hide'); $("#xml_content").val(""); $("#import_status").html(""); show_subscription_list(account); }, 1500); 
+	}
+	});
+	}
+}
