@@ -24,7 +24,7 @@
 	$format_2 = 'm/d, H:i';  
 	
 	# For format month/day change to $date_format = $format_1;
-	# For format day.month change to $date_format = $formar_2;
+	# For format day.month change to $date_format = $format_2;
 	
 	$date_format = $format_1;
 

@@ -2,7 +2,7 @@
 //
 	include("config.php");
 	
-	$delete_time = time() - 604800;
+	$delete_time = time() - 1209600;
 	
 	$loop = 0;
 
@@ -36,8 +36,32 @@
 	//$obj_1->channel_name = mb_convert_encoding($obj_1->channel_name, "HTML-ENTITIES", "UTF-8");
 	
 	$channel_name = $obj_0->channel_name;
+	$thumbnail_img = $obj_1->video_thumbnail;
 	
 	$loop = $loop + 1;
+	
+	// video length
+	if(function_exists('curl_version'))
+	{
+	$curl = curl_init();
+	curl_setopt_array($curl, array(
+    CURLOPT_RETURNTRANSFER => 1,
+	CURLOPT_URL => 'https://www.youtube.com/watch?v='.$obj_1->video_id,
+    CURLOPT_USERAGENT => 'Mozilla 5./0 (compatible) Opera or Gecko',
+	));
+	$response = curl_exec($curl);
+	
+	preg_match_all("#u0026len=(.*?)u#si", $response, $video_length);
+	$video_length[0][0] = str_replace("u0026len=", "", $video_length[0][0]);
+	$video_length[0][0] = str_replace("\\\u", "", $video_length[0][0]);
+	
+	$video_length = round($video_length[0][0]/60, 0);
+	$video_length_info = ' | ~ '.$video_length.' min.';
+	if($video_length == '0'){ $video_length_info = ' | Livestream'; }
+	} 
+	else { // echo 'curl not available'; 
+	$video_length_info = '';
+	}
 	
 	if(!isset($content) or $content == ""){ $content = ""; }
 	
@@ -49,13 +73,13 @@
 			<td class="channel-name" align="center">
 			<h2><a href="https://www.youtube.com/channel/'.$obj_0->channel_id.'" target="_blank">
 			<strong>'.$channel_name.' ('.date($date_format, $obj_1->timestamp).')</strong></a></h2>
-			<h3 class="video-title"><strong>'.$obj_1->video_title.'</strong></h3></td>
+			<h3 class="video-title"><strong>'.$obj_1->video_title.'</strong>'.$video_length_info.'</h3></td>
 		  </tr>
 		  <tr>
 			<td>
-			<div align="center"> 
-			<a href="https://youtube.com/watch?v='.$obj_1->video_id.'" target="_blank"> 
-			<img class="thumbnail-img" src="'.$obj_1->video_thumbnail.'" alt="'.$obj_1->video_title.'" title="'.$obj_1->video_title.'"></a> 
+			<div align="center">
+			<a href="https://youtube.com/watch?v='.$obj_1->video_id.'" target="_blank">
+			<img class="thumbnail-img" src="'.$obj_1->video_thumbnail.'" alt="'.$obj_1->video_title.'" title="'.$obj_1->video_title.'"></a>
 			</div>
 			</td>
 		  </tr>
@@ -74,7 +98,8 @@
 	}
 	}
 	
-	mysqli_query($dbmysqli, "DELETE FROM `".$obj_0->channel_id."#".$id."` WHERE `notified` = '1' AND `timestamp` < ".$delete_time." ");
+	//mysqli_query($dbmysqli, "DELETE FROM `".$obj_0->channel_id."#".$id."` WHERE `notified` = '1' AND `timestamp` < ".$delete_time." ");
+	mysqli_query($dbmysqli, "DELETE FROM `".$obj_0->channel_id."#".$id."` WHERE `timestamp` < ".$delete_time." ");
 	mysqli_query($dbmysqli, "OPTIMIZE TABLE `".$obj_0->channel_id."#".$id."`");
 	mysqli_query($dbmysqli, "OPTIMIZE TABLE `#accounts`");
 	mysqli_query($dbmysqli, "OPTIMIZE TABLE `#channel_list`");
@@ -87,7 +112,8 @@
 	
 	if(!isset($content) or $content == ""){ $content = ""; }
 	
-	$htmlContent = ' 
+	$htmlContent = '
+	<!DOCTYPE html> 
 	<html> 
 	<head> 
 	<title>Youtube Upload Reminder</title>
@@ -100,6 +126,7 @@
 		color:#000; 
 		background-color: #000;
 		padding: 10px;
+		box-shadow: inset 0px 0px 5px 0px #fff;
 	}
 	.header {
 		font-size: 35px;
@@ -127,7 +154,7 @@
 		padding-bottom: 10px;
 	}
 	.frame {
-		border: thin solid #FFFFFF;
+		border: 1px solid #ccc;
 		padding-top: 10px;
 		margin-bottom: 40px;
 	}
@@ -139,15 +166,15 @@
 	.thumbnail-img {
 		width: 360px;
 		height: 270px;
-		border: 5px solid #FFF;
+		border: 3px solid #fff;
 	}
 	.spacer {
 		padding-top: 10px; 
 		padding-bottom: 10px;
 	}
 	.spacer a:link {
-		font-size: 12px;
-		color: #FFF;
+		font-size: 10px;
+		color: #333333;
 		text-decoration: none;
 	}
 	</style>

@@ -51,6 +51,7 @@ if($feed)
 	$video_title = $feed->entry[$i]->title;
 	$video_title = str_replace("'", "`", $video_title);
 	$video_title = str_replace("\"", "`", $video_title);
+	$video_title = mb_convert_encoding($video_title, "HTML-ENTITIES", "UTF-8");
 	
 	$video_id = $feed->entry[$i]->id;
 	$video_id = str_replace("yt:video:", "", $video_id);
@@ -84,7 +85,7 @@ if($feed)
 	date,
 	notified, 
 	notified_ts, 
-	account   
+	account 
 	) VALUES (
 	'".$channel_name."', 
 	'".$video_title."', 

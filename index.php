@@ -46,8 +46,9 @@ if($action == 'show_accounts')
 	
 	
 if($action == 'show_subscription_list')
-	{	
-	$loop = 0;
+	{
+	$group = '';
+	$group_title = '';
 	
 	$sql = mysqli_query($dbmysqli, "SELECT active FROM `#accounts` WHERE `mailadress` LIKE '".$account."' ");
 	$result = mysqli_fetch_assoc($sql);
@@ -62,15 +63,17 @@ if($action == 'show_subscription_list')
 	while ($obj = mysqli_fetch_object($result_0)){
 	{
 	
-	$loop = $loop + 1;
-	
 	if($obj->active == 'yes'){ $checked = 'checked'; } else { $checked = ''; }
+	
+	if($group == strtoupper($obj->channel_name[0][0])){ $group_title = ''; } else { $group_title = strtoupper($obj->channel_name[0][0]); }
+	
+	$group = strtoupper($obj->channel_name[0][0]);
 	
 	if(!isset($subscription_content) or $subscription_content == ""){ $subscription_content = ""; }
 	
 	$subscription_content = $subscription_content.'
 	<tr id="item_'.$obj->channel_id.'">
-	<td>'.$loop.'</td>
+	<td><strong>'.$group_title.'</strong></td>
 	<td><input id="channel_name_'.$obj->channel_id.'" type="text" style="width:100%" value="'.$obj->channel_name.'"></td>
 	<td>'.$obj->channel_id.'</td>
 	<td><input id="checkbox_'.$obj->channel_id.'" type="checkbox" onclick="subscription_list(\'set\',\''.$obj->channel_id.'\',\''.$account.'\')" '.$checked.'>
@@ -82,43 +85,53 @@ if($action == 'show_subscription_list')
 	<button class="btn btn-danger btn-xs" title="Delete" onclick="subscription_list(\'delete_channel\',\''.$obj->channel_id.'\',\''.$account.'\')" type="button">
 	<span class="glyphicon glyphicon-trash" aria-hidden="true"></span>
 	</button>
+	<button class="btn btn-default btn-xs" title="Show last videos" onclick="subscription_list(\'show_last_videos\',\''.$obj->channel_id.'\',\''.$account.'\')" type="button">
+	<span class="glyphicon glyphicon-blackboard" aria-hidden="true"></span>
+	</button>
 	</td>
-	</tr>
-	';
-	}
-	}
-	}
+	</tr>';
 	
-	$import_field = '
-	
-	';
+	}
+	}
+	}
 	
 	$subscription_list_header = '
 	<div class="spacer_5"></div>
 	<div class="row">
-	<div class="col-sm-12 col-lg-12 col-md-12">
-	Add a channel | <a style="cursor:pointer;" onclick="bulk_import(\'modal\',\''.$account.'\')">Bulk import</a>
+	<div class="col-sm-9 col-lg-9 col-md-9">
+	Add a channel | <a style="cursor:pointer;" onclick="bulk_import(\'modal\',\''.$account.'\')">Bulk import</a> | 
+	<a href="https://github.com/gitman328/youtube-upload-mail-reminder#how-to-get-the-channel-id" target="_blank" title="How to get the Channel ID?">?</a>
 	<div class="spacer_5"></div>
 	<div class="row">
-	<div class="col-sm-5 col-lg-5 col-md-5"><input type="text" id="channel_name" placeholder="Channel Name" class="form-control"></div>
-	<div class="col-sm-5 col-lg-5 col-md-5"><input type="text" id="channel_id" placeholder="Channel ID" class="form-control"></div>
-	<div style="padding-top:5px;">
-	<a href="https://github.com/gitman328/youtube-upload-mail-reminder#how-to-get-the-channel-id" target="_blank" title="How to get the Channel ID?">?</a></div>
+	<div class="col-sm-7 col-lg-7 col-md-7"><input type="text" id="channel_name" placeholder="Channel Name" class="form-control"></div>
 	<div class="spacer_5"></div>
-	<div class="col-sm-5 col-lg-5 col-md-5"><input type="submit" class="btn btn-default" id="button" value="Save" onclick="save_channel(\''.$account.'\')">
+	<div class="col-sm-7 col-lg-7 col-md-7"><input type="text" id="channel_id" placeholder="Channel ID" class="form-control"></div>
+	<div class="spacer_5"></div>
+	<div class="col-sm-7 col-lg-7 col-md-7"><input type="submit" class="btn btn-default" id="button" value="Save" onclick="save_channel(\''.$account.'\')">
 	<span style="padding-left:3px;" id="status_register">&nbsp;</span>
 	</div>
 	</div>
+	</div>
+	<!-- col-->
+	<div class="col-sm-3 col-lg-3 col-md-3">
+	<label style="font-weight:normal"><input id="account" onclick="activate_account(\''.$account.'\')" type="checkbox" '.$account_status.'> Activate Account</label>
+	<div class="spacer_5"></div>
+	<strong class="label label-primary">'.$account.'</strong>
+	<div class="spacer_5"></div>
+	<strong style="cursor:pointer;" class="label label-danger" onclick="delete_account(\''.$account.'\')">Delete Account</strong>
+	</div>
+	<!-- col-->
+	</div>
+	<!-- row-->
+	<div class="row">
+	<div class="col-sm-12 col-lg-12 col-md-12">
 	<hr>
 	  <div class="ibox">
 		<div class="ibox-title">
-		  <h5>Subscribed channels for <strong class="label label-primary">'.$account.'</strong> 
-		  <strong style="cursor:pointer;" class="label label-danger" onclick="delete_account(\''.$account.'\')">Delete Account</strong>
-		 <label style="font-weight:normal"><input id="account" onclick="activate_account(\''.$account.'\')" type="checkbox" '.$account_status.'> Activate Account</label>
-		  </h5>
+		  <h5>Subscribed channels</h5>
 		  <div class="spacer_5"></div>
 		<div class="ibox-content">
-		  <table class="table table-striped table-bordered">
+		  <table class="table table-striped table-bordered table-responsive">
 			<thead>
 			  <tr>
 				<th>#</th>
@@ -131,9 +144,9 @@ if($action == 'show_subscription_list')
 			<tbody>
 			';
 			
-			$subscription_list_footer = '
+	$subscription_list_footer = '
 			</tbody>
-		  </table>
+		  </table>  
 		</div>
 	  </div>
 	</div>';
@@ -203,6 +216,7 @@ if($action == 'delete_account')
 	}
 
 	mysqli_query($dbmysqli, "DELETE FROM `#accounts` WHERE `mailadress` LIKE '".$account."' ");
+	
 	mysqli_query($dbmysqli, "DELETE FROM `#channel_list` WHERE `account` LIKE '".$account."' ");
 	
 	echo 'account_deleted';
@@ -244,6 +258,7 @@ if($action == 'delete_channel')
 	$id = $result['id'];
 	
 	mysqli_query($dbmysqli, "DELETE FROM `#channel_list` WHERE `channel_id` LIKE '".$channel_id."' AND `account` LIKE '".$account."' ");
+	
 	mysqli_query($dbmysqli, "DROP TABLE `".$channel_id."#".$id."` ");
 	
 	echo 'channel_deleted';
@@ -331,9 +346,70 @@ if($action == 'bulk_import')
 			
 	} // for i
 	
-	} else { echo '<strong>An error occured. Check the inserted content!</strong>'; exit; } // entries
+	} else { 
+	
+	echo '<strong>An error occured. Check the inserted content!</strong>'; 
+	exit; 
+	
+	} // entries
 	
 	echo $loop.' Channels added!';
+	exit;
+}
+
+if($action == 'show_last_videos')
+	{
+	
+	$loop = 0;
+	
+	$sql_0 = mysqli_query($dbmysqli, "SELECT `id` FROM `#accounts` WHERE `mailadress` LIKE '".$account."' ");
+	$result_0 = mysqli_fetch_assoc($sql_0);
+	$account_id = $result_0['id'];
+	
+	$sql_1 = "SELECT * FROM `".$channel_id."#".$account_id."` ORDER BY `timestamp` DESC LIMIT 0,25";
+	
+	if ($result_1 = mysqli_query($dbmysqli,$sql_1))
+	{
+	while ($obj = mysqli_fetch_object($result_1)){
+	{
+	
+	if(!isset($last_videos_content) or $last_videos_content == ""){ $last_videos_content = ""; }
+	
+	if($date_format == $format_1){ $publish_date = 'd.m.Y, H:i'; }
+	if($date_format == $format_2){ $publish_date = 'm/d/Y, g:i A'; }
+	
+	$loop = $loop +1;
+	
+	$last_videos_content = $last_videos_content.'
+	<tr>
+		<td>'.$loop.'</td>
+		<td>
+		<a href="https://youtube.com/watch?v='.$obj->video_id.'" target="_blank"> 
+		<img src="'.$obj->video_thumbnail.'" width="150" height="112" alt="'.$obj->video_title.'" title="'.$obj->video_title.'"></a>
+		</td>
+		<td><h4>'.$obj->video_title.'</h4>
+		<div class="spacer_10"></div>
+		'.date($publish_date, $obj->timestamp).'
+		</td>
+	</tr>';
+	
+	}
+	}
+	}
+
+	$last_videos_header = '
+	<table class="table table-hover">
+
+	<tbody>';
+	
+	$last_videos_footer = '
+	</tbody>
+	</table>
+	';
+	
+	if(!isset($last_videos_content) or $last_videos_content == ""){ $last_videos_content = "No videos in database."; }
+	
+	echo $last_videos_header.$last_videos_content.$last_videos_footer;
 	
 	exit;
 }
@@ -410,7 +486,7 @@ if($action == 'bulk_import')
       </div>
     </div>
   </footer>
-  <!--modal-->
+  <!--modal1 bulk import-->
   <div class="modal fade" id="Modal1" tabindex="-1" role="dialog" aria-labelledby="Modal1Label">
     <div class="modal-dialog" role="document">
       <div class="modal-content">
@@ -437,13 +513,32 @@ if($action == 'bulk_import')
           </div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-default btn-block" onclick="bulk_import('import')">Import</button>
+          <button type="button" class="btn btn-success btn-block" onclick="bulk_import('import')">Import</button>
         </div>
         <input id="account_name" type="text" hidden>
       </div>
     </div>
   </div>
 </div>
+<!--modal1-->
+<!--modal2 last videos-->
+  <div class="modal fade" id="Modal2" tabindex="-1" role="dialog" aria-labelledby="Modal2Label">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+        <span id="Modal2Header"></span>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group"> 
+            <div id="last_videos_list"></div>
+          </div>
+        </div>
+        <div class="modal-footer"></div>
+      </div>
+    </div>
+  </div>
+<!--modal2-->
 <!-- /.container -->
 <!-- jQuery -->
 <script src="js/jquery.js"></script>
@@ -475,9 +570,18 @@ $(document).ready(function(){
 	function(data){
 	$("#account_list").html(data);
 	});
+	
+	// read cookie
+function getCookieValue(a) {
+   var b = document.cookie.match('(^|;)\\s*' + a + '\\s*=\\s*([^;]+)');
+   return b ? b.pop() : '';
+   }
+   var s_account = getCookieValue("s_account");
+   if(s_account != ''){ show_subscription_list(s_account); }
 });
 
 </script>
 <a class="scroll-top"> <i class="glyphicon glyphicon-arrow-up"></i> </a>
+<span style="display:none;"><img src="loading.gif"></span>
 </body>
 </html>
