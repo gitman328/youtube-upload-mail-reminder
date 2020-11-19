@@ -46,7 +46,9 @@ function save_account(){
 function delete_account(account){
 
 	if(confirm(unescape('Are you sure?'))){
-		
+	
+	document.cookie="s_account="+account+";"+"max-age="+(3600*24*-1)+"";
+	
 	$.post("index.php",
 	{
 	action: 'delete_account',
@@ -120,6 +122,8 @@ function save_channel(account){
 
 
 function show_subscription_list(account){
+
+	document.cookie="s_account="+account+";"+"max-age="+(3600*24*365)+"";
 	
 	$.post("index.php",
 	{
@@ -148,9 +152,18 @@ function subscription_list(action,channel_id,account){
 	},
 	function(data){
 	if(action == 'delete_channel'){ $("#item_"+channel_id).fadeOut(); }
+	
+	if(action == 'show_last_videos'){ 
+	$("#Modal2Header").html("<a href=\"https://youtube.com/channel/"+channel_id+"\" target=\"_blank\">"+channel_name+"</a>"); 
+	$('#Modal2').modal('show'); 
+	$("#last_videos_list").html(data); 
+	return; 
+	}
+	
 	$("#edit_status").html("");
 	});
 }
+
 
 function bulk_import(action,account){
 	
