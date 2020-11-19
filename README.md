@@ -40,6 +40,16 @@ Take note: After adding a new channel and run the script (feed_parser.php), a ma
 
 After that only new videos was displayed in the notification mail.
 
+---
+
+Last changes
+
+A button to show last uploaded videos, in channel list added
+If php-curl is installed at Server where the script is running, the video length was shown in notification mail
+Some optical improvements in interface and mail conducted
+
+---
+
 
 
 Tags: Youtube, Upload, Mail, Reminder, Notification
