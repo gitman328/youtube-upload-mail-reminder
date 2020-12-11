@@ -9,6 +9,8 @@
 	if(!isset($_REQUEST['account']) or $_REQUEST['account'] == ''){ $_REQUEST['account'] = ''; }
 	if(!isset($_REQUEST['active']) or $_REQUEST['active'] == ''){ $_REQUEST['active'] = ''; }
 	if(!isset($_REQUEST['content']) or $_REQUEST['content'] == ''){ $_REQUEST['content'] = ''; }
+	if(!isset($_REQUEST['import_option']) or $_REQUEST['import_option'] == ''){ $_REQUEST['import_option'] = ''; }
+	if(!isset($_REQUEST['channel_url']) or $_REQUEST['channel_url'] == ''){ $_REQUEST['channel_url'] = ''; }
 	
 	$action = $_REQUEST['action'];
 	$channel_id = $_REQUEST['channel_id'];
@@ -17,7 +19,8 @@
 	$account = $_REQUEST['account'];
 	$active = $_REQUEST['active'];
 	$content = $_REQUEST['content'];
-	
+	$import_option = $_REQUEST['import_option'];
+	$channel_url = $_REQUEST['channel_url'];
 
 if($action == 'show_accounts')
 	{
@@ -28,7 +31,7 @@ if($action == 'show_accounts')
 	while ($obj = mysqli_fetch_object($result)){
 	{
 	
-	if(!isset($account_list) or $account_list == ""){ $account_list = ""; }
+	if(!isset($account_list) or $account_list == ''){ $account_list = ''; }
 	
 	$account_list = $account_list.'
 	<a style="cursor:pointer;" class="list-group-item" onclick="show_subscription_list(\''.$obj->mailadress.'\')">'.$obj->mailadress.'</a>
@@ -37,7 +40,7 @@ if($action == 'show_accounts')
 	}
 	}
 	
-	if(!isset($account_list) or $account_list == ""){ $account_list = ""; }
+	if(!isset($account_list) or $account_list == ''){ $account_list = ''; }
 	
 	echo $account_list.'<a style="cursor:pointer;" class="list-group-item" onclick="add_account()">Add Account</a>';
 	
@@ -62,14 +65,22 @@ if($action == 'show_subscription_list')
 	{
 	while ($obj = mysqli_fetch_object($result_0)){
 	{
-	
 	if($obj->active == 'yes'){ $checked = 'checked'; } else { $checked = ''; }
 	
 	if($group == strtoupper($obj->channel_name[0][0])){ $group_title = ''; } else { $group_title = strtoupper($obj->channel_name[0][0]); }
 	
 	$group = strtoupper($obj->channel_name[0][0]);
 	
-	if(!isset($subscription_content) or $subscription_content == ""){ $subscription_content = ""; }
+	if(!isset($subscription_content) or $subscription_content == ''){ $subscription_content = ''; }
+	
+	if(function_exists('curl_version'))
+	{
+	$search_channel_link = '<a style="cursor:pointer;" onclick="search_channel_id(\'modal\');">Search Channel ID</a> |';
+	
+	} else { 
+	
+	$search_channel_link = ''; 
+	}
 	
 	$subscription_content = $subscription_content.'
 	<tr id="item_'.$obj->channel_id.'">
@@ -99,7 +110,7 @@ if($action == 'show_subscription_list')
 	<div class="spacer_5"></div>
 	<div class="row">
 	<div class="col-sm-9 col-lg-9 col-md-9">
-	Add a channel | <a style="cursor:pointer;" onclick="bulk_import(\'modal\',\''.$account.'\')">Bulk import</a> | 
+	Add a channel | <a style="cursor:pointer;" onclick="bulk_import(\'modal\',\''.$account.'\')">Bulk import</a> | '.$search_channel_link.'
 	<a href="https://github.com/gitman328/youtube-upload-mail-reminder#how-to-get-the-channel-id" target="_blank" title="How to get the Channel ID?">?</a>
 	<div class="spacer_5"></div>
 	<div class="row">
@@ -151,7 +162,7 @@ if($action == 'show_subscription_list')
 	  </div>
 	</div>';
 	
-	if(!isset($subscription_content) or $subscription_content == ""){ $subscription_content = ""; }
+	if(!isset($subscription_content) or $subscription_content == ''){ $subscription_content = ''; }
 	
 	echo '<div id="channel_list">'.$subscription_list_header.$subscription_content.$subscription_list_footer.'</div>';
 	
@@ -216,7 +227,6 @@ if($action == 'delete_account')
 	}
 
 	mysqli_query($dbmysqli, "DELETE FROM `#accounts` WHERE `mailadress` LIKE '".$account."' ");
-	
 	mysqli_query($dbmysqli, "DELETE FROM `#channel_list` WHERE `account` LIKE '".$account."' ");
 	
 	echo 'account_deleted';
@@ -235,6 +245,7 @@ if($action == 'activate_account')
 if($action == 'save_channel_id')
 	{
 	sleep(1);
+	
 	$sql = mysqli_query($dbmysqli, "SELECT COUNT(id) FROM `#channel_list` WHERE `channel_id` LIKE '".$channel_id."' AND `account` LIKE '".$account."' ");
 	$result = mysqli_fetch_row($sql);
 	$summary = $result[0];
@@ -258,7 +269,6 @@ if($action == 'delete_channel')
 	$id = $result['id'];
 	
 	mysqli_query($dbmysqli, "DELETE FROM `#channel_list` WHERE `channel_id` LIKE '".$channel_id."' AND `account` LIKE '".$account."' ");
-	
 	mysqli_query($dbmysqli, "DROP TABLE `".$channel_id."#".$id."` ");
 	
 	echo 'channel_deleted';
@@ -291,7 +301,7 @@ if($action == 'channel_list')
 	while ($obj = mysqli_fetch_object($result)){
 	{
 	
-	if(!isset($channel_list) or $channel_list == ""){ $channel_list = ""; }
+	if(!isset($channel_list) or $channel_list == ''){ $channel_list = ''; }
 	
 	$channel_list = $channel_list.'
 	'.$obj->channel_name.' | '.$obj->channel_id.'<br> 
@@ -300,7 +310,7 @@ if($action == 'channel_list')
 	}
 	}
 	
-	if(!isset($channel_list) or $channel_list == ""){ $channel_list = ""; } 
+	if(!isset($channel_list) or $channel_list == ''){ $channel_list = ''; } 
 	
 	echo $channel_list;
 	
@@ -310,19 +320,18 @@ if($action == 'channel_list')
 
 if($action == 'bulk_import')
 	{
-	
 	sleep(1);
 	
 	$loop = 0;
 	
+	if($import_option == 'xml')
+	{
 	$entries = preg_match_all("#<outline(.*?)/>#si", $content, $null);
 	
 	if($entries != 0)
 	{
-	
 	for ($i = 1; $i <= $entries; $i++)
 	{
-	
 	// channel name
 	preg_match_all("#text=\"(.*?)\"#si", $content, $channel_name);
 	$channel_name = str_replace("text=\"", "", $channel_name[0][$i]);
@@ -334,32 +343,97 @@ if($action == 'bulk_import')
 	$channel_id = str_replace("\"", "", $channel_id);
 	
 	// check if channel already exist
-	$sql = mysqli_query($dbmysqli, "SELECT COUNT(id) FROM `#channel_list` WHERE `channel_id` LIKE '".$channel_id."' AND `account` LIKE '".$account."' ");
+	$sql = mysqli_query($dbmysqli, "SELECT COUNT(id) FROM `#channel_list` WHERE `channel_id` LIKE '".$match_channel_id[0][$i]."' AND `account` LIKE '".$account."' ");
 	$result = mysqli_fetch_row($sql);
 	$summary = $result[0];
 	
 	if($summary == 0)
 	{
-	$loop = $loop +1;
-	mysqli_query($dbmysqli, "INSERT INTO `#channel_list` (channel_id, channel_name, account, active) VALUES ('".$channel_id."', '".$channel_name."', '".$account."', 'yes') ");
+	$loop = $loop + 1;
+	
+	mysqli_query($dbmysqli, "INSERT INTO `#channel_list` 
+	(
+	channel_id, 
+	channel_name, 
+	account, 
+	active
+	) VALUES (
+	'".$match_channel_id[0][$i]."', 
+	'".$channel_name."', 
+	'".$account."', 
+	'yes'
+	) 
+	");
 	}
-			
 	} // for i
+	
+	} else {
+	
+	echo '<strong>An error occured. Check the inserted content!</strong>';
+	exit;
+	}
+	
+	} // xml
+
+
+	if($import_option == 'html')
+	{
+	preg_match_all("#ytInitialData(.*?)ytInitialPlayerResponse#si", $content, $source);
+	$entries = preg_match_all("#channelRenderer(.*?)channelId#si", $source[0][0], $null);
+
+	if($entries != 0)
+	{
+	for ($i = 0; $i < $entries; $i++)
+	{
+	// channel name
+	preg_match_all("#title\":{\"simpleText\"(.*?)},#si", $source[0][0], $match_channel_name);
+	$match_channel_name[0][$i] = str_replace("title\":{\"simpleText\":\"", "", $match_channel_name[0][$i]);
+	$match_channel_name[0][$i] = str_replace("\"},", "", $match_channel_name[0][$i]);
+	
+	// channel id
+	preg_match_all("#:{\"channelId\":(.*?)\",\"#si", $source[0][0], $match_channel_id);
+	$match_channel_id[0][$i] = str_replace(":{\"channelId\":\"", "", $match_channel_id[0][$i]);
+	$match_channel_id[0][$i] = str_replace("\",\"", "", $match_channel_id[0][$i]);
+	
+	// check if channel already exist
+	$sql = mysqli_query($dbmysqli, "SELECT COUNT(id) FROM `#channel_list` WHERE `channel_id` LIKE '".$match_channel_id[0][$i]."' AND `account` LIKE '".$account."' ");
+	$result = mysqli_fetch_row($sql);
+	$summary = $result[0];
+	
+	if($summary == 0)
+	{
+	$loop = $loop + 1;
+	mysqli_query($dbmysqli, "INSERT INTO `#channel_list` 
+	(
+	channel_id, 
+	channel_name, 
+	account, 
+	active
+	) VALUES (
+	'".$match_channel_id[0][$i]."', 
+	'".$match_channel_name[0][$i]."', 
+	'".$account."', 
+	'yes'
+	) 
+	");
+	}		
+	} // for i
+	
+	echo $loop.' Channels added!';
+	exit;
 	
 	} else { 
 	
 	echo '<strong>An error occured. Check the inserted content!</strong>'; 
-	exit; 
-	
-	} // entries
-	
-	echo $loop.' Channels added!';
 	exit;
+	}
+	} // html
+	
 }
+
 
 if($action == 'show_last_videos')
 	{
-	
 	$loop = 0;
 	
 	$sql_0 = mysqli_query($dbmysqli, "SELECT `id` FROM `#accounts` WHERE `mailadress` LIKE '".$account."' ");
@@ -373,12 +447,12 @@ if($action == 'show_last_videos')
 	while ($obj = mysqli_fetch_object($result_1)){
 	{
 	
-	if(!isset($last_videos_content) or $last_videos_content == ""){ $last_videos_content = ""; }
+	if(!isset($last_videos_content) or $last_videos_content == ''){ $last_videos_content = ''; }
 	
 	if($date_format == $format_1){ $publish_date = 'd.m.Y, H:i'; }
 	if($date_format == $format_2){ $publish_date = 'm/d/Y, g:i A'; }
 	
-	$loop = $loop +1;
+	$loop = $loop + 1;
 	
 	$last_videos_content = $last_videos_content.'
 	<tr>
@@ -388,7 +462,7 @@ if($action == 'show_last_videos')
 		<img src="'.$obj->video_thumbnail.'" width="150" height="112" alt="'.$obj->video_title.'" title="'.$obj->video_title.'"></a>
 		</td>
 		<td><h4>'.$obj->video_title.'</h4>
-		<div class="spacer_10"></div>
+		<div class="spacer_5"></div>
 		'.date($publish_date, $obj->timestamp).'
 		</td>
 	</tr>';
@@ -398,8 +472,8 @@ if($action == 'show_last_videos')
 	}
 
 	$last_videos_header = '
+	<div class="row">
 	<table class="table table-hover">
-
 	<tbody>';
 	
 	$last_videos_footer = '
@@ -407,13 +481,33 @@ if($action == 'show_last_videos')
 	</table>
 	';
 	
-	if(!isset($last_videos_content) or $last_videos_content == ""){ $last_videos_content = "No videos in database."; }
+	if(!isset($last_videos_content) or $last_videos_content == ''){ $last_videos_content = '<div style="padding-left:10px;">No videos in database.</div>'; }
 	
 	echo $last_videos_header.$last_videos_content.$last_videos_footer;
 	
 	exit;
 }
 
+
+if($action == 'search_channel_id')
+	{
+	sleep(1);
+	$curl = curl_init();
+	curl_setopt_array($curl, array(
+    CURLOPT_RETURNTRANSFER => 1,
+	CURLOPT_URL => $channel_url,
+    CURLOPT_USERAGENT => 'Mozilla 5./0 (compatible) Opera or Gecko',
+	));
+	$response = curl_exec($curl);
+	
+	preg_match_all("#value\":\"(.*?)\"#si", $response, $channel_id);
+	$channel_id[0][0] = str_replace("value\":\"", "", $channel_id[0][0]);
+	$channel_id[0][0] = str_replace("\"", "", $channel_id[0][0]);
+	
+	if($channel_id[0][0] == ''){ echo 'Channel not found!'; } else { echo 'Channel ID: <strong>'.$channel_id[0][0].'</strong>'; }
+	
+	exit;
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -491,25 +585,28 @@ if($action == 'show_last_videos')
     <div class="modal-dialog" role="document">
       <div class="modal-content">
         <div class="modal-header">
+        <span>Input format: 
+        <select id="import_option" onChange="show_info()">
+        <option value="html" selected>HTML</option>
+        <option value="xml">XML</option>
+        </select>
+        </span>
           <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
         </div>
         <div class="modal-body">
-          <div class="form-group"> </div>
           <div class="form-group"> To import your whole subscription list from Youtube, make these steps.
-            <ul>
+            <ul id="import-info">
               <div class="spacer_10"></div>
-              <li>Login into your Youtube Account</li>
-              <li><a href="https://www.youtube.com/subscription_manager?action_takeout=1" target="_blank">Download the XML file from your subscription list</a></li>
-              <li>Open the XML file with a Text Editor, and copy the content</li>
-              <li>Paste the complete content from the XML file in text area down below</li>
-              <li>Click the button to import</li>
+                <li>Login into your Youtube Account, and open your <a href="https://www.youtube.com/feed/channels" target="_blank">subscription list</a></li>
+                <li>Press key Ctrl + U to view the source code from Youtube page</li>
+                <li>Press key Ctrl + A to mark the whole source code</li>
+                <li>Press key Ctrl + C to copy the whole source code</li>
+                <li>Paste the content in text area down below, and click the button to import</li>
             </ul>
             <div class="spacer_5"></div>
             <textarea id="xml_content" cols="3" rows="5" style="width:100%;"></textarea>
-            <div class="spacer_20"></div>
-            <center id="import_status">
-              &nbsp;
-            </center>
+            <div class="spacer_10"></div>
+            <div align="center" id="import_status">&nbsp;</div>
           </div>
         </div>
         <div class="modal-footer">
@@ -539,6 +636,28 @@ if($action == 'show_last_videos')
     </div>
   </div>
 <!--modal2-->
+<!--modal3 search channel id-->
+  <div class="modal fade" id="Modal3" tabindex="-1" role="dialog" aria-labelledby="Modal3Label">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+          <p>Paste in the complete URL from the Youtube user channel</p>
+            <input id="channel_url" type="text" class="form-control" style="width:80%;" placeholder="e.g. https://www.youtube.com/user/NewerDocumentaries">
+                <div class="spacer_5"></div>
+                <input type="button" class="btn btn-success" onclick="search_channel_id();" value="Search">
+              <div class="spacer_20"></div>
+            <div id="search_result">&nbsp;</div>
+          </div>
+        </div>
+        <div class="modal-footer"></div>
+      </div>
+    </div>
+  </div>
+<!--modal3-->
 <!-- /.container -->
 <!-- jQuery -->
 <script src="js/jquery.js"></script>
@@ -547,7 +666,6 @@ if($action == 'show_last_videos')
 <!-- Custom Scropt -->
 <script src="js/script.js"></script>
 <script>
-
 $(function() {
 	$(window).scroll(function(){
 	if ($(this).scrollTop() > 500) {
@@ -561,7 +679,7 @@ $('.scroll-top').click(function(){
 	return false;
 	});
 });
-	
+
 $(document).ready(function(){
 	$.post("index.php",
 	{
@@ -579,9 +697,9 @@ function getCookieValue(a) {
    var s_account = getCookieValue("s_account");
    if(s_account != ''){ show_subscription_list(s_account); }
 });
-
 </script>
 <a class="scroll-top"> <i class="glyphicon glyphicon-arrow-up"></i> </a>
 <span style="display:none;"><img src="loading.gif"></span>
+
 </body>
 </html>
