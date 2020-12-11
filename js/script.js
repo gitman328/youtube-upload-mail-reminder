@@ -173,6 +173,8 @@ function bulk_import(action,account){
 	{
 	var account = $("#account_name").val();
 	var content = $("#xml_content").val();
+	var import_option = $("#import_option").val();
+	
 	if(content == ''){ return; }
 	
 	$("#import_status").html("<img src=\"loading.gif\" width=\"16\" height=\"16\" align=\"absmiddle\">");
@@ -181,7 +183,8 @@ function bulk_import(action,account){
 	{
 	action: 'bulk_import',
 	account: account,
-	content: content
+	content: content,
+	import_option: import_option
 	},
 	function(data){
 	$("#import_status").html(data);
@@ -192,4 +195,49 @@ function bulk_import(action,account){
 	}
 	});
 	}
+}
+
+
+function show_info(option){
+
+	var option = $("#import_option").val();
+	
+	if(option == 'html')
+	{
+	$("#import-info").html("<div class=\"spacer_10\"></div>\
+	<li>Login into your Youtube Account, and open your <a href=\"https://www.youtube.com/feed/channels\" target=\"_blank\">subscription list</a></li>\
+	<li>Press Ctrl+U to open the source code from page</li>\
+	<li>Press Ctrl+A to mark the source code</li>\
+	<li>Press Ctrl+C to copy the source code</li>\
+	<li>Paste the source code in text area down below, and click the button to import</li>");
+	}
+	
+	if(option == 'xml')
+	{
+	$("#import-info").html("<div class=\"spacer_10\"></div>\
+	<li>Login into your Youtube Account</li>\
+	<li><a href=\"https://www.youtube.com/subscription_manager?action_takeout=1\" target=\"_blank\">Download the XML file from your subscription list</a></li>\
+	<li>Open the XML file with a Text Editor, and copy the content</li>\
+	<li>Paste the complete content from the XML file in text area down below</li>\
+	<li>Click the button to import</li>");
+	}
+	
+}
+
+
+function search_channel_id(action)
+	{
+	if(action == 'modal'){ $('#Modal3').modal('show'); return; }
+	var channel_url = $("#channel_url").val();
+	if(channel_url == ''){ return; }
+	
+	$("#search_result").html("<img src=\"loading.gif\" width=\"16\" height=\"16\" align=\"absmiddle\">");
+	$.post("index.php",
+	{
+	action: 'search_channel_id', 
+	channel_url: channel_url
+	},
+	function(data){
+	$("#search_result").html(data);
+	});
 }
