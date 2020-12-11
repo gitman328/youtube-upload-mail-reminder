@@ -1,6 +1,6 @@
 # youtube-upload-mail-reminder
 
-Until Youtube has disabled their mail notification system, i've written this simple mail reminder script.
+After Youtube has disabled their mail notification system, i've written this simple mail reminder script.
 The script uses the XML feed from a channel, to check if a new video has been uploaded.
 
 Requirements on Server/Webspace:
@@ -42,8 +42,13 @@ After that only new videos was displayed in the notification mail.
 
 ---
 
-Last changes
+Last changes:
 
+After Youtube doesn't furthermore export the subscription list as XML file, a function to import the subscription list from Youtube source code was added
+
+To get the Channel ID easier, a function to search it with user name was added. (To use this function php-curl is required)
+
+-
 A button to show last uploaded videos, in channel list added
 
 If php-curl is installed at Server where the script is running, the video length was shown in notification mail
