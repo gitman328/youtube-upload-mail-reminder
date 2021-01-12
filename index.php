@@ -53,6 +53,15 @@ if($action == 'show_subscription_list')
 	$group = '';
 	$group_title = '';
 	
+	if(function_exists('curl_version'))
+	{
+	$search_channel_link = '<a style="cursor:pointer;" onclick="search_channel_id(\'modal\');">Search Channel ID</a> |';
+	
+	} else { 
+	
+	$search_channel_link = ''; 
+	}
+	
 	$sql = mysqli_query($dbmysqli, "SELECT active FROM `#accounts` WHERE `mailadress` LIKE '".$account."' ");
 	$result = mysqli_fetch_assoc($sql);
 	$active = $result['active'];
@@ -72,15 +81,6 @@ if($action == 'show_subscription_list')
 	$group = strtoupper($obj->channel_name[0][0]);
 	
 	if(!isset($subscription_content) or $subscription_content == ''){ $subscription_content = ''; }
-	
-	if(function_exists('curl_version'))
-	{
-	$search_channel_link = '<a style="cursor:pointer;" onclick="search_channel_id(\'modal\');">Search Channel ID</a> |';
-	
-	} else { 
-	
-	$search_channel_link = ''; 
-	}
 	
 	$subscription_content = $subscription_content.'
 	<tr id="item_'.$obj->channel_id.'">
@@ -343,7 +343,7 @@ if($action == 'bulk_import')
 	$channel_id = str_replace("\"", "", $channel_id);
 	
 	// check if channel already exist
-	$sql = mysqli_query($dbmysqli, "SELECT COUNT(id) FROM `#channel_list` WHERE `channel_id` LIKE '".$match_channel_id[0][$i]."' AND `account` LIKE '".$account."' ");
+	$sql = mysqli_query($dbmysqli, "SELECT COUNT(id) FROM `#channel_list` WHERE `channel_id` LIKE '".$channel_id."' AND `account` LIKE '".$account."' ");
 	$result = mysqli_fetch_row($sql);
 	$summary = $result[0];
 	
@@ -358,7 +358,7 @@ if($action == 'bulk_import')
 	account, 
 	active
 	) VALUES (
-	'".$match_channel_id[0][$i]."', 
+	'".$channel_id."', 
 	'".$channel_name."', 
 	'".$account."', 
 	'yes'
