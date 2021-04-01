@@ -495,6 +495,7 @@ if($action == 'search_channel_id')
 	$curl = curl_init();
 	curl_setopt_array($curl, array(
     CURLOPT_RETURNTRANSFER => 1,
+	CURLOPT_FOLLOWLOCATION => 1,
 	CURLOPT_URL => $channel_url,
     CURLOPT_USERAGENT => 'Mozilla 5./0 (compatible) Opera or Gecko',
 	));

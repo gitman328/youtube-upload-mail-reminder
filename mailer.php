@@ -46,6 +46,7 @@
 	$curl = curl_init();
 	curl_setopt_array($curl, array(
     CURLOPT_RETURNTRANSFER => 1,
+	CURLOPT_FOLLOWLOCATION => 1,
 	CURLOPT_URL => 'https://www.youtube.com/watch?v='.$obj_1->video_id,
     CURLOPT_USERAGENT => 'Mozilla 5./0 (compatible) Opera or Gecko',
 	));
@@ -98,7 +99,6 @@
 	}
 	}
 	
-	//mysqli_query($dbmysqli, "DELETE FROM `".$obj_0->channel_id."#".$id."` WHERE `notified` = '1' AND `timestamp` < ".$delete_time." ");
 	mysqli_query($dbmysqli, "DELETE FROM `".$obj_0->channel_id."#".$id."` WHERE `timestamp` < ".$delete_time." ");
 	mysqli_query($dbmysqli, "OPTIMIZE TABLE `".$obj_0->channel_id."#".$id."`");
 	mysqli_query($dbmysqli, "OPTIMIZE TABLE `#accounts`");
@@ -147,6 +147,9 @@
 	.channel-name a:hover {
 		color: #FF4646;
 		text-decoration: underline;
+	}
+	.channel-name a:visited {
+		color: #FF4646;
 	}
 	.video-title {
 		color: #FFF; 
