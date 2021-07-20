@@ -116,7 +116,8 @@ function save_channel(account){
 	account: account
 	},
 	function(data){
-	if(data == 'success'){ channel_list(account); } else { $("#status_register").html(data); }
+	if(data == 'success'){ setTimeout(function() { channel_list(account); }, 1000); 
+	$("#status_register").html('<i class="glyphicon glyphicon-ok fa-1x" style="color:#5CB85C"></i>');} else { $("#status_register").html(data); }
 	});
 }
 
