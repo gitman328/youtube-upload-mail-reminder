@@ -491,7 +491,8 @@ if($action == 'show_last_videos')
 
 if($action == 'search_channel_id')
 	{
-	sleep(1);
+	if(function_exists('curl_version'))
+	{
 	$curl = curl_init();
 	curl_setopt_array($curl, array(
     CURLOPT_RETURNTRANSFER => 1,
@@ -501,13 +502,20 @@ if($action == 'search_channel_id')
 	));
 	$response = curl_exec($curl);
 	
-	preg_match_all("#value\":\"(.*?)\"#si", $response, $channel_id);
-	$channel_id[0][0] = str_replace("value\":\"", "", $channel_id[0][0]);
+	preg_match_all("#browseId\":\"(.*?)\"#si", $response, $channel_id);
+	$channel_id[0][0] = str_replace("browseId\":\"", "", $channel_id[0][0]);
 	$channel_id[0][0] = str_replace("\"", "", $channel_id[0][0]);
 	
 	if($channel_id[0][0] == ''){ echo 'Channel not found!'; } else { echo 'Channel ID: <strong>'.$channel_id[0][0].'</strong>'; }
 	
 	exit;
+	
+	} else { 
+	
+	echo 'PHP curl is not installed.';
+	
+	exit;
+	}
 }
 ?>
 <!DOCTYPE html>
